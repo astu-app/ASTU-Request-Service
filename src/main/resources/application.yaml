@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: RequestService
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432}/${DATABASE_NAME:requestdb}?currentSchema=${DATABASE_SCHEMA:public}
+    username: ${SPRING_DATASOURCE_USERNAME:azimusma}
+    password: ${SPRING_DATASOURCE_PASSWORD:azimusma}
+    driver-class-name: org.postgresql.Driver
+  sql:
+    init:
+      mode: always
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: azimusma@gmail.com
+    password: #Azim123
+    email: azimusma@gmail.com
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+service:
+  host: ${ACCOUNT_HOST:http://localhost:8080/}

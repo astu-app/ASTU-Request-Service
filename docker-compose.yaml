@@ -1,0 +1,40 @@
+version: "3.8"
+services:
+  RequestService:
+    restart: on-failure
+    container_name: RequestService
+    hostname: request-service
+    build:
+      context: .
+    image: astu/request-service:v1
+    depends_on:
+      RequestDB:
+        condition: service_healthy
+
+    networks:
+      - services-network
+      - requests-network
+    env_file:
+      - .env
+
+  RequestDB:
+    restart: on-failure
+    container_name: requestDb
+    hostname: requestDb
+    image: postgres:alpine
+    networks:
+      - requests-network
+    env_file:
+      - .env
+#    volumes:
+#      - ./data/request-db:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+
+networks:
+  requests-network:
+    driver: bridge
+
+  services-network:
+    external:
+      name: private-astu-services-network
