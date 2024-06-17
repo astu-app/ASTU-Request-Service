@@ -50,14 +50,14 @@ class RequestService(
         val request = requestRepository.findById(requestId).orElseThrow()
         request.status = RequestStatus.Success
         requestRepository.save(request)
-        if (request.type == RequestType.Email) {
-            emailService.sendEmail(
-                request.email!!,
-                "Your request has been successfully submitted",
-                "Your request has been successfully submitted",
-                files
-            )
-        }
+//        if (request.type == RequestType.Email) {
+//            emailService.sendEmail(
+//                request.email!!,
+//                "Your request has been successfully submitted",
+//                "Your request has been successfully submitted",
+//                files
+//            )
+//        }
     }
 
     fun failRequest(requestId: UUID, failRequestDTO: FailRequestDTO) {
