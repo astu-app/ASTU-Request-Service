@@ -1,6 +1,7 @@
 package org.astu.requestservice.request
 
 import jakarta.transaction.Transactional
+import org.astu.requestservice.exception.CommonException
 import org.astu.requestservice.request.controller.AddRequestDTO
 import org.astu.requestservice.request.controller.AddRequirementFieldDTO
 import org.astu.requestservice.request.controller.FailRequestDTO
@@ -12,6 +13,7 @@ import org.astu.requestservice.request.model.RequestType
 import org.astu.requestservice.request.model.RequirementField
 import org.astu.requestservice.requirement.model.Requirement
 import org.astu.requestservice.template.TemplateRepository
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.util.*
@@ -32,13 +34,14 @@ class RequestService(
     @Transactional
     fun addRequest(userId: UUID, dto: AddRequestDTO): UUID {
         if (dto.email.isNullOrBlank() && dto.type == RequestType.Email)
-            throw IllegalArgumentException("Email is required for email requests")
+            throw CommonException(HttpStatus.NOT_FOUND, "Запрос требует заполненного поля электронной почты")
         val template = templateRepository.findById(dto.templateId)
-        val request = Request(template = template.get(), userId = userId, type = dto.type, email = dto.email)
+            .orElseThrow { CommonException(HttpStatus.NOT_FOUND, "Не удалось найти шаблон с id ${dto.templateId}") }
+        val request = Request(template = template, userId = userId, type = dto.type, email = dto.email)
         requestRepository.save(request)
 
         dto.fields.forEach { field ->
-            val requirement = template.get().requirements.find { it.id == field.requirementId }!!
+            val requirement = template.requirements.find { it.id == field.requirementId }!!
             validateField(field, requirement)
             createField(field, requirement, request)
         }
@@ -47,39 +50,64 @@ class RequestService(
 
     @Transactional
     fun successRequest(requestId: UUID, files: List<MultipartFile>) {
-        val request = requestRepository.findById(requestId).orElseThrow()
+        val request = requestRepository.findById(requestId)
+            .orElseThrow { CommonException(HttpStatus.NOT_FOUND, "Не удалось найти заявление с id $requestId") }
         request.status = RequestStatus.Success
-        requestRepository.save(request)
-//        if (request.type == RequestType.Email) {
-//            emailService.sendEmail(
-//                request.email!!,
-//                "Your request has been successfully submitted",
-//                "Your request has been successfully submitted",
-//                files
-//            )
-//        }
+        runCatching {
+            requestRepository.save(request)
+        }.onFailure {
+            throw CommonException(HttpStatus.NOT_FOUND, "Не удалось одобрить заявление")
+        }
+        if (request.type == RequestType.Email) {
+            runCatching {
+                emailService.sendEmail(
+                    request.email!!,
+                    "Заявка была одобрена",
+                    "Заявка на \"${request.template.name}\" была одобрена",
+                    files
+                )
+            }.onFailure {
+                println(it.message)
+                println(it)
+                throw CommonException(HttpStatus.BAD_REQUEST, "Не удалось отправить сообщение")
+            }
+        }
     }
 
     fun failRequest(requestId: UUID, failRequestDTO: FailRequestDTO) {
-        val request = requestRepository.findById(requestId).orElseThrow()
+        val request = requestRepository.findById(requestId)
+            .orElseThrow { CommonException(HttpStatus.NOT_FOUND, "Не удалось найти заявление с id $requestId") }
         request.status = RequestStatus.Denied
         request.message = failRequestDTO.message
-        requestRepository.save(request)
+        kotlin.runCatching {
+            requestRepository.save(request)
+        }.onFailure {
+            throw CommonException(HttpStatus.NOT_FOUND, "Не удалось отказать в заявлении")
+        }
     }
 
     fun removeRequest(requestId: UUID) {
-        val request = requestRepository.findById(requestId).orElseThrow()
+        val request = requestRepository.findById(requestId)
+            .orElseThrow { CommonException(HttpStatus.NOT_FOUND, "Не удалось найти заявление с id $requestId") }
         request.status = RequestStatus.Removed
-        requestRepository.save(request)
+        kotlin.runCatching {
+            requestRepository.save(request)
+        }.onFailure {
+            throw CommonException(HttpStatus.NOT_FOUND, "Не удалось отменить заявление")
+        }
     }
 
     private fun validateField(field: AddRequirementFieldDTO, requirement: Requirement) {
         if (requirement.isMandatory && field.value == "null")
-            throw IllegalArgumentException("Field ${requirement.name} is mandatory")
+            throw CommonException(HttpStatus.NOT_FOUND, "Поле \"${requirement.name}\" обязательно к заполнению")
     }
 
     private fun createField(dto: AddRequirementFieldDTO, requirement: Requirement, request: Request) {
         val field = RequirementField(request = request, requirement = requirement, value = dto.value)
-        requirementFieldRepository.save(field)
+        kotlin.runCatching {
+            requirementFieldRepository.save(field)
+        }.onFailure {
+            throw CommonException(HttpStatus.NOT_FOUND, "Не удалось создать заявление")
+        }
     }
 }

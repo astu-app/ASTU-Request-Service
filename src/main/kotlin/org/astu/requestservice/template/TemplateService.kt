@@ -1,6 +1,7 @@
 package org.astu.requestservice.template
 
 import jakarta.transaction.Transactional
+import org.astu.requestservice.exception.CommonException
 import org.astu.requestservice.requirement.RequirementRepository
 import org.astu.requestservice.requirement.model.Requirement
 import org.astu.requestservice.requirement_type.RequirementTypeRepository
@@ -11,6 +12,7 @@ import org.astu.requestservice.template.controller.TemplateDTO
 import org.astu.requestservice.template.mapper.TemplateMapper
 import org.astu.requestservice.template.model.Template
 import org.astu.requestservice.template.model.UserGroup
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -34,12 +36,16 @@ class TemplateService(
         )
         template.groups = groups.toMutableList()
 
-        templateRepository.save(template)
+        kotlin.runCatching {
+            templateRepository.save(template)
+        }.onFailure {
+            throw CommonException(HttpStatus.BAD_REQUEST, "Не удалось создать шаблон заявления")
+        }
 
         val types = requirementTypeRepository.findAll()
         dto.requirements.forEach { requirements ->
             val type = types.find { it.id == requirements.requirementTypeId }
-                ?: throw RuntimeException("Requirement type not found")
+                ?: throw CommonException(HttpStatus.BAD_REQUEST, "Тип требования такой не найден")
             createRequirement(requirements, type, template)
         }
 
@@ -60,6 +66,10 @@ class TemplateService(
             requirementType = requirementType,
             template = template
         )
-        requirementRepository.save(requirement)
+        kotlin.runCatching {
+            requirementRepository.save(requirement)
+        }.onFailure {
+            throw CommonException(HttpStatus.BAD_REQUEST, "Не удалось создать шаблон заявления")
+        }
     }
 }

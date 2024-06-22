@@ -3,17 +3,16 @@ package api.account.client.models
 import kotlinx.serialization.Serializable
 
 
-@Serializable
 class AccountDTO {
-    var id: String? = null
-    var firstName: String? = null
-    var secondName: String? = null
-    var patronymic: String ? = null
-    var isEmployee: Boolean? = null
-    var isStudent: Boolean? = null
-    var isAdmin: Boolean? = null
-    var isTeacher: Boolean? = null
-    var employeeInfo: EmployeeInfoDTO? = null
-    var studentInfo: StudentInfoDTO? = null
-    var teacherInfo: TeacherInfoDTO? = null
+    val id: String? = null
+    val firstName: String? = null
+    val secondName: String? = null
+    val patronymic: String? = null
+    val isEmployee: Boolean = false
+    val isStudent: Boolean= false
+    val isAdmin: Boolean = false
+    val isTeacher: Boolean = false
+    val departmentId: String? = null
+    val studentGroupId: String? = null
 }
+

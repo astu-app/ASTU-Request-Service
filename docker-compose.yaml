@@ -10,6 +10,8 @@ services:
     depends_on:
       RequestDB:
         condition: service_healthy
+    ports:
+      - "587:587"
 
     networks:
       - services-network

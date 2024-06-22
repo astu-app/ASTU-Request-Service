@@ -10,11 +10,11 @@ spring:
     init:
       mode: always
   mail:
-    host: smtp.gmail.com
+    host: smtp.yandex.ru
     port: 587
-    username: azimusma@gmail.com
-    password: #Azim123
-    email: azimusma@gmail.com
+    username: "AZIMUSMA12@yandex.ru"
+    password: "ppfukebjfllefhbq"
+    email: "azimusma@gmail.com"
     properties:
       mail:
         smtp:
@@ -23,3 +23,7 @@ spring:
             enable: true
 service:
   host: ${ACCOUNT_HOST:http://localhost:8080/}
+
+server:
+  tomcat:
+    keep-alive-timeout: 60000
