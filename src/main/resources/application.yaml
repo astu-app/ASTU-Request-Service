@@ -10,11 +10,11 @@ spring:
     init:
       mode: always
   mail:
-    host: smtp.yandex.ru
-    port: 587
-    username: "AZIMUSMA12@yandex.ru"
-    password: "ppfukebjfllefhbq"
-    email: "azimusma@gmail.com"
+    host: "smtp.timeweb.ru"
+    port: 2525
+    username: "astu@ttraum.ru"
+    password: "eoaABoK=L3t<x>"
+    email: "astu@ttraum.ru"
     properties:
       mail:
         smtp:

@@ -10,17 +10,22 @@ import java.util.*
 @RequestMapping("api/request")
 class RequestController(private val requestService: RequestService) {
     @PostMapping("{id}/success", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
-    fun success(@RequestParam files: MultipartFile, @PathVariable id: UUID) {
-        requestService.successRequest(id, listOf(files))
+    fun success(@RequestParam files: MultipartFile, @PathVariable id: UUID): String {
+        return requestService.successRequest(id, listOf(files))
+    }
+
+    @PostMapping("{id}/approve")
+    fun approve(@PathVariable id: UUID, @RequestParam comment: String): String {
+        return requestService.successRequest(id, listOf(), comment)
     }
 
     @PostMapping("{id}/fail")
-    fun fail(@PathVariable id: UUID, @RequestBody failDTO: FailRequestDTO) {
-        requestService.failRequest(id, failDTO)
+    fun fail(@PathVariable id: UUID, @RequestBody failDTO: FailRequestDTO): String {
+        return requestService.failRequest(id, failDTO)
     }
 
     @GetMapping("user/{userId}")
-    fun getRequestsForUser(@PathVariable userId: UUID): List<RequestDTO>{
+    fun getRequestsForUser(@PathVariable userId: UUID): List<RequestDTO> {
         return requestService.getForUser(userId)
     }
 
@@ -34,8 +39,8 @@ class RequestController(private val requestService: RequestService) {
         return requestService.addRequest(userId, addRequestDTO)
     }
 
-    @DeleteMapping("user/{requestId}")
-    fun removeRequest(@PathVariable requestId: UUID) {
-        requestService.removeRequest(requestId)
+    @PostMapping("user/{requestId}/delete")
+    fun removeRequest(@PathVariable requestId: UUID): String {
+        return requestService.removeRequest(requestId)
     }
 }

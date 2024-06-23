@@ -49,15 +49,16 @@ class RequestService(
     }
 
     @Transactional
-    fun successRequest(requestId: UUID, files: List<MultipartFile>) {
+    fun successRequest(requestId: UUID, files: List<MultipartFile>, comment: String? = null): String {
         val request = requestRepository.findById(requestId)
             .orElseThrow { CommonException(HttpStatus.NOT_FOUND, "Не удалось найти заявление с id $requestId") }
         request.status = RequestStatus.Success
-        runCatching {
-            requestRepository.save(request)
+        request.message = comment
+        val id = runCatching {
+            requestRepository.save(request).userId
         }.onFailure {
             throw CommonException(HttpStatus.NOT_FOUND, "Не удалось одобрить заявление")
-        }
+        }.getOrThrow()
         if (request.type == RequestType.Email) {
             runCatching {
                 emailService.sendEmail(
@@ -72,29 +73,33 @@ class RequestService(
                 throw CommonException(HttpStatus.BAD_REQUEST, "Не удалось отправить сообщение")
             }
         }
+        return id.toString()
     }
 
-    fun failRequest(requestId: UUID, failRequestDTO: FailRequestDTO) {
+    fun failRequest(requestId: UUID, failRequestDTO: FailRequestDTO): String {
         val request = requestRepository.findById(requestId)
             .orElseThrow { CommonException(HttpStatus.NOT_FOUND, "Не удалось найти заявление с id $requestId") }
         request.status = RequestStatus.Denied
         request.message = failRequestDTO.message
-        kotlin.runCatching {
-            requestRepository.save(request)
+        val id = runCatching {
+            requestRepository.save(request).userId
         }.onFailure {
             throw CommonException(HttpStatus.NOT_FOUND, "Не удалось отказать в заявлении")
-        }
+        }.getOrThrow()
+        return id.toString()
     }
 
-    fun removeRequest(requestId: UUID) {
+    fun removeRequest(requestId: UUID): String {
         val request = requestRepository.findById(requestId)
             .orElseThrow { CommonException(HttpStatus.NOT_FOUND, "Не удалось найти заявление с id $requestId") }
         request.status = RequestStatus.Removed
-        kotlin.runCatching {
-            requestRepository.save(request)
+        val id = runCatching {
+            requestRepository.save(request).userId
         }.onFailure {
             throw CommonException(HttpStatus.NOT_FOUND, "Не удалось отменить заявление")
-        }
+        }.getOrThrow()
+        return id.toString()
+
     }
 
     private fun validateField(field: AddRequirementFieldDTO, requirement: Requirement) {

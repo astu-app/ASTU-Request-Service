@@ -1,7 +1,6 @@
 package org.astu.requestservice.request
 
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
 import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.stereotype.Service
@@ -55,9 +54,9 @@ private var username: String,
         for (file in files) {
             val source = { file.inputStream }
             if (file.contentType != null)
-                helper.addAttachment(file.name, source, file.contentType!!)
+                helper.addAttachment(file.originalFilename ?: file.name, source, file.contentType!!)
             else
-                helper.addAttachment(file.name, source)
+                helper.addAttachment(file.originalFilename ?: file.name, source)
         }
 
         emailSender.send(message)
