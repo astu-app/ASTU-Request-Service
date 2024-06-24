@@ -6,7 +6,7 @@ services:
     hostname: request-service
     build:
       context: .
-    image: astu/request-service:v1
+    image: traumtoten/request-service:v1
     depends_on:
       RequestDB:
         condition: service_healthy
